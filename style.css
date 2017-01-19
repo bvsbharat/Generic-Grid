@@ -1,0 +1,39 @@
+ table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        th span {
+            color: #000;
+        }
+
+        tr:nth-child(even) {
+            background-color: #F1F8E9;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #DCEDC8;
+        }
+
+        th {
+            background-color: #8BC34A;
+            color: white;
+            cursor: pointer;
+            text-transform: capitalize;
+            font-family: sans-serif;
+        }
+
+        #grid {
+            width: 800px;
+            margin: 40px auto;
+        }
+
+        body {
+            background: rgba(255, 255, 255, 0);
+        }

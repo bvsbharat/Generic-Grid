@@ -1,158 +1,148 @@
-(function (window, undefined ) {
-	'use strict';
-var document = window.document, SEPARATOR = '│';
+(function (window, undefined) {
+	"use strict";
 
-	window.GenricGrid = function () {
-	}
+	var document = window.document;
+
+	window.GenricGrid = function () {};
 
 	GenricGrid.prototype = {
 
-		init: function (data, keys) {
-			this.printTable(data, keys);
+		gridWrapper:'',
+
+		init: function (targetID,data) {
+			this.setgridWrapper(targetID);
+			this.printTable(data);
 		},
 
-		getColoumnsKeys: function (records) {
-
-			var keys = JSON.stringify(records).replace(/\W(\w+)":(?=.*\b\1:?)/g, " ").match(/\w*":/g).map(function (ele) {
-				return ele.split('":')[0];
-			});
-
-			return keys;
+		setgridWrapper:function(id){
+			this.gridWrapper = document.getElementById(id) || document.getElementsByTagName('body')[0];
 		},
 
-		repeatString: function (amount, str) {
-			str = str || ' ';
-			return Array.apply(0, Array(amount)).join(str);
-		},
+		printTable: function (data) {
 
-		getFormattedString: function (value, isHeaderValue) {
-			if (isHeaderValue) {} else if (typeof value === 'string') {
-				// Wrap strings in inverted commans.
-				return '"' + value + '"';
-			} else if (typeof value === 'function') {
-				// Just show `function` for a function.
-				return 'function';
-			}
-			return value + '';
-		},
-
-		getColoredAndFormattedString: function (value, isHeaderValue) {
-			var colorFn;
-			if (isHeaderValue) {} else if (typeof value === 'number' || typeof value === 'boolean') {
-				colorFn = "blue";
-			} else if (typeof value === 'string') {
-				colorFn = "red";
-			} else if (typeof value === 'undefined') {
-				colorFn = "white";
-			}
-
-			value = this.getFormattedString(value, isHeaderValue);
-			if (colorFn) {
-				return value + '';
-			} else {
-				return value + '';
-			}
-		},
-
-		printRows: function (rows) {
-			if (!rows.length) return;
-			var row, rowString,
-				i, j,
-				padding,
-				tableWidth = 0,
-				numCols = rows[0].length;
-
-			// For every column, calculate the maximum width in any row.
-			for (j = 0; j < numCols; j++) {
-				var maxLengthForColumn = 0;
-				for (i = 0; i < rows.length; i++) {
-					maxLengthForColumn = Math.max(this.getFormattedString(rows[i][j], !i || !j).length, maxLengthForColumn);
-				}
-				// Give some more padding to biggest string.
-				maxLengthForColumn += 4;
-				tableWidth += maxLengthForColumn;
-
-				// Give padding to rows for current column.
-				for (i = 0; i < rows.length; i++) {
-					padding = maxLengthForColumn - this.getFormattedString(rows[i][j], !i || !j).length;
-					// Distribute padding - 1 in starting, rest at the end.
-					rows[i][j] = ' ' + this.getColoredAndFormattedString(rows[i][j], !i || !j) + this.repeatString(padding - 1);
-				}
-			}
-
-			// HACK: Increase table width just by 1 to make it look good.
-			tableWidth += 1;
-
-			console.log(this.repeatString(tableWidth, '='))
-			for (i = 0; i < rows.length; i++) {
-				row = rows[i];
-				rowString = '';
-				for (var j = 0; j < row.length; j++) {
-					rowString += row[j] + SEPARATOR;
-				}
-				console.log(rowString);
-				// Draw border after table header.
-				if (!i) {
-					console.log(this.repeatString(tableWidth, '-'))
-				}
-			}
-			console.log(this.repeatString(tableWidth, '='))
-		},
-
-		printTable: function (data, keys) {
-			var i, j, rows = [],
-				row, entry,
-				objKeys,
-				tempData;
+			var keys = this.getColoumnsKeys(data),
+				tbl = this.createElement('table'),
+				tblhead = this.createElement('thead'),
+				tbdy = this.createElement('tbody'),
+				tr = this.createElement('tr');
 
 			// Simply console.log if an `object` type wasn't passed.
-			if (typeof data !== 'object') {
+			if (typeof data !== "object") {
 				console.log(data);
 				return;
 			}
 
-			// If an object was passed, create data from its properties instead.
-			if (!(data instanceof Array)) {
-				tempData = [];
-				// `objKeys` are now used to index every row.
-				objKeys = Object.keys(data);
-				for (var key in data) {
-					// Avoiding `hasOwnProperty` check because Chrome shows prototype properties
-					// as well.
-					tempData.push(data[key]);
+			tblhead.appendChild(this.createRow(data, keys, "th"));
+			tbl.appendChild(tblhead);
+
+			for (var i = 0; i < data.length; i++) {
+				tbdy.appendChild(this.createRow(data, keys, "td", i));
+			}
+
+			tbl.appendChild(tbdy);
+			this.gridWrapper.appendChild(tbl);
+
+		},
+
+		createRow: function (data, keys, cellType, i) {
+			var tr = this.createElement("tr");
+			for (var j = 0; j < keys.length; j++) {
+				var cell = this.createElement(cellType);
+
+				if (i !== undefined) {
+					if (data[i][keys[j]]) {
+						cell.appendChild(document.createTextNode(data[i][keys[j]]));
+					} else {
+						cell.appendChild(document.createTextNode("N/A"));
+					}
+				} else {
+					cell.appendChild(document.createTextNode(keys[j]));
+					this.eventBinding(cell);
 				}
-				data = tempData;
-			}
 
-			// Get the keys from first data entry if custom keys are not passed.
-			if (!keys) {
-				keys = this.getColoumnsKeys(data);
-				keys.sort();
+				tr.appendChild(cell);
 			}
+			return tr;
+		},
 
-			// Create header row.
-			rows.push([]);
-			row = rows[rows.length - 1];
-			row.push('(index)');
-			for (i = 0; i < keys.length; i++) {
-				row.push(keys[i]);
-			}
+		getColoumnsKeys: function (records) {
+			var keys = JSON.stringify(records).replace(/\W(\w+)":(?=.*\b\1:?)/g, " ").match(/\w*":/g).map(function (ele) {
+				return ele.split('":')[0];
+			});
+			return keys;
+		},
 
-			for (j = 0; j < data.length; j++) {
-				entry = data[j];
-				rows.push([]);
-				row = rows[rows.length - 1];
-				// Push entry for 1st column (index).
-				row.push(objKeys ? objKeys[j] : j);
-				for (i = 0; i < keys.length; i++) {
-					row.push(entry[keys[i]]);
+		eventBinding: function (ele) {
+			var f_sl = 1,
+				self = this,
+				columName;
+			ele.addEventListener("click", function () {
+				f_sl *= -1;
+				var n = self.prevAll(ele).length;
+				if (!columName) {
+					columName = ele.innerText;
 				}
+				ele.innerText = " ";
+				if (f_sl >= 1) {
+					ele.innerHTML = columName + " <span>&#9650;</span>";
+				} else {
+					ele.innerHTML = columName + " <span>&#9660;</span>";
+				}
+
+				self.sortTable(f_sl, n);
+			});
+		},
+
+		sortTable: function (f, n) {
+
+			var rows = this.gridWrapper.querySelectorAll("tbody tr"),
+				self = this;
+			rows = Array.from(rows);
+
+			rows.sort(function (a, b) {
+
+				var A = self.getVal(a, n);
+				var B = self.getVal(b, n);
+
+				if (A < B) {
+					return -1 * f;
+				}
+				if (A > B) {
+					return 1 * f;
+				}
+				return 0;
+			});
+
+			for (var i = 0; i < rows.length; i++) {
+				var el = this.gridWrapper.querySelector("tbody");
+				el.appendChild(rows[i]);
+			}
+		},
+
+		getVal: function (elm, n) {
+			var v = "";
+			if (elm.querySelectorAll("td")[n]) {
+				v = elm.querySelectorAll("td")[n].innerText.toUpperCase();
 			}
 
-			this.printRows(rows);
+			if (!isNaN(v)) {
+				v = parseInt(v, 10);
+			}
+			return v;
+		},
+
+		createElement: function (element) {
+			return document.createElement(element);
+		},
+
+		prevAll: function (element) {
+			var result = [];
+			while (element = element.previousElementSibling)
+				result.push(element);
+			return result;
 		}
 
-	}
+	};
 
 
 }(window));
