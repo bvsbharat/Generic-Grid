@@ -41,6 +41,7 @@
 
 			tbl.appendChild(tbdy);
 			this.gridWrapper.appendChild(tbl);
+            this.eventBinding("header");
 
 		},
 
@@ -51,13 +52,14 @@
 
 				if (i !== undefined) {
 					if (data[i][keys[j]]) {
-						cell.appendChild(document.createTextNode(data[i][keys[j]]));
+						cell.appendChild(document.createTextNode(data[i][keys[j]].toLowerCase()));
 					} else {
 						cell.appendChild(document.createTextNode("N/A"));
 					}
 				} else {
 					cell.appendChild(document.createTextNode(keys[j]));
-					this.eventBinding(cell);
+                    cell.className="header";
+
 				}
 
 				tr.appendChild(cell);
@@ -72,12 +74,14 @@
 			return keys;
 		},
 
-		eventBinding: function (ele) {
+		eventBinding: function (className) {
 			var f_sl = 1,
 				self = this,
 				columName;
-			ele.addEventListener("click", function () {
+
+            this.addEventHandler(className,"click" ,function (element){
 				f_sl *= -1;
+                var ele = element.target;
 				var n = self.prevAll(ele).length;
 				if (!columName) {
 					columName = ele.innerText;
@@ -140,7 +144,25 @@
 			while (element = element.previousElementSibling)
 				result.push(element);
 			return result;
-		}
+		},
+
+        addEventHandler: function (className, eventType, handler) {
+
+             if (document.body.addEventListener) {
+                document.body.addEventListener(eventType, handlerContainer, false);
+            } else {
+                document.body.attachEvent("on" + eventType, handlerContainer); //for IE
+            }
+
+            function handlerContainer(e) {
+                e = e || window.event;
+                var target = e.target || e.srcElement;
+                if (target.className.match(className)) {
+                    handler(e); //your handler
+                }
+            }
+
+        }
 
 	};
 
