@@ -76,7 +76,8 @@
 			var f_sl = 1,
 				self = this,
 				columName;
-			ele.addEventListener("click", function () {
+
+            this.addEventHandler(ele,"click" ,function () {
 				f_sl *= -1;
 				var n = self.prevAll(ele).length;
 				if (!columName) {
@@ -140,7 +141,17 @@
 			while (element = element.previousElementSibling)
 				result.push(element);
 			return result;
-		}
+		},
+
+        addEventHandler: function (className, eventType, handler) {
+
+            if (document.body.addEventListener) {
+                document.body.addEventListener(eventType, handler, false);
+            } else {
+                document.body.attachEvent("on" + eventType, handler); //for IE
+            }
+
+        }
 
 	};
 
